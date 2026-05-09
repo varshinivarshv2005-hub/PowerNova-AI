@@ -1,9 +1,9 @@
 import streamlit as st
-import plotly.express as px
 import pandas as pd
+import plotly.express as px
 
 from utils.database import fetch_data
-from utils.analytics import detect_anomaly
+
 
 # --------------------------------
 # PAGE CONFIG
@@ -14,193 +14,155 @@ st.set_page_config(
 )
 
 # --------------------------------
-# LOAD CSS
-# --------------------------------
-with open("assets/styles.css") as f:
-    st.markdown(
-        f"<style>{f.read()}</style>",
-        unsafe_allow_html=True
-    )
-
-# --------------------------------
-# TITLE
-# --------------------------------
-st.title("📊 Advanced Analytics Dashboard")
-
-# --------------------------------
 # LOAD DATA
 # --------------------------------
 df = fetch_data()
-
-# Convert timestamp
-df["timestamp"] = pd.to_datetime(df["timestamp"])
-
-# Extract hour
-df["hour"] = df["timestamp"].dt.hour
-
+df = df.tail(50)
 # --------------------------------
-# BASIC METRICS
+# TITLE
 # --------------------------------
-avg_usage = round(df["usage_kwh"].mean(), 2)
-
-max_usage = round(df["usage_kwh"].max(), 2)
-
-min_usage = round(df["usage_kwh"].min(), 2)
-
-peak_hour = df.groupby("hour")["usage_kwh"].mean().idxmax()
-
-# --------------------------------
-# METRICS
-# --------------------------------
-col1, col2, col3, col4 = st.columns(4)
-
-col1.metric("Average Usage", avg_usage)
-
-col2.metric("Maximum Usage", max_usage)
-
-col3.metric("Minimum Usage", min_usage)
-
-col4.metric("Peak Hour", f"{peak_hour}:00")
+st.title("📊 Electricity Analytics")
 
 st.markdown("---")
 
 # --------------------------------
-# HOURLY USAGE ANALYSIS
+# BASIC STATS
 # --------------------------------
-st.subheader("⏰ Hourly Usage Analysis")
+col1, col2, col3 = st.columns(3)
 
-hourly_usage = df.groupby("hour")["usage_kwh"].mean().reset_index()
+col1.metric(
+    "Average Usage",
+    round(df["usage_kwh"].mean(), 2)
+)
 
-fig1 = px.bar(
-    hourly_usage,
-    x="hour",
+col2.metric(
+    "Maximum Usage",
+    round(df["usage_kwh"].max(), 2)
+)
+
+col3.metric(
+    "Minimum Usage",
+    round(df["usage_kwh"].min(), 2)
+)
+
+# --------------------------------
+# USAGE TREND
+# --------------------------------
+st.markdown("---")
+
+st.subheader("📈 Usage Trend Analysis")
+
+trend_data = df.tail(100)
+
+fig1 = px.line(
+    trend_data,
+    x="timestamp",
     y="usage_kwh",
-    title="Average Hourly Electricity Usage"
+    markers=True,
+    title="Electricity Usage Trend"
+)
+
+fig1.update_layout(
+    template="plotly_dark",
+
+    paper_bgcolor="rgba(0,0,0,0)",
+
+    plot_bgcolor="rgba(0,0,0,0)",
+
+    transition_duration=500
 )
 
 st.plotly_chart(
     fig1,
-    use_container_width=True
+    use_container_width=True,
+    key="analytics_trend"
 )
 
 # --------------------------------
-# VOLTAGE TREND
+# VOLTAGE ANALYSIS
 # --------------------------------
-st.subheader("⚡ Voltage Trend")
+st.markdown("---")
+
+st.subheader("⚡ Voltage Analysis")
 
 fig2 = px.line(
-    df,
+    trend_data,
     x="timestamp",
     y="voltage",
-    title="Voltage Over Time"
+    title="Voltage Fluctuation"
+)
+
+fig2.update_layout(
+    template="plotly_dark",
+
+    paper_bgcolor="rgba(0,0,0,0)",
+
+    plot_bgcolor="rgba(0,0,0,0)"
 )
 
 st.plotly_chart(
     fig2,
-    use_container_width=True
+    use_container_width=True,
+    key="analytics_voltage"
 )
 
 # --------------------------------
-# CURRENT TREND
+# CURRENT ANALYSIS
 # --------------------------------
-st.subheader("🔌 Current Trend")
+st.markdown("---")
+
+st.subheader("🔌 Current Analysis")
 
 fig3 = px.line(
-    df,
+    trend_data,
     x="timestamp",
     y="current",
-    title="Current Over Time"
+    title="Current Variation"
+)
+
+fig3.update_layout(
+    template="plotly_dark",
+
+    paper_bgcolor="rgba(0,0,0,0)",
+
+    plot_bgcolor="rgba(0,0,0,0)"
 )
 
 st.plotly_chart(
     fig3,
-    use_container_width=True
+    use_container_width=True,
+    key="analytics_current"
 )
 
 # --------------------------------
-# USAGE DISTRIBUTION
+# CORRELATION
 # --------------------------------
-st.subheader("📈 Usage Distribution")
+st.markdown("---")
 
-fig4 = px.histogram(
-    df,
-    x="usage_kwh",
-    nbins=20,
-    title="Electricity Usage Distribution"
+st.subheader("🧠 Feature Correlation")
+
+corr = df[[
+    "usage_kwh",
+    "voltage",
+    "current"
+]].corr()
+
+fig4 = px.imshow(
+    corr,
+    text_auto=True,
+    title="Correlation Matrix"
+)
+
+fig4.update_layout(
+    template="plotly_dark",
+
+    paper_bgcolor="rgba(0,0,0,0)",
+
+    plot_bgcolor="rgba(0,0,0,0)"
 )
 
 st.plotly_chart(
     fig4,
-    use_container_width=True
-)
-
-# --------------------------------
-# ANOMALY DETECTION
-# --------------------------------
-st.subheader("🚨 Anomaly Analysis")
-
-df["status"] = df.apply(
-    lambda row: detect_anomaly(
-        row["usage_kwh"],
-        row["voltage"],
-        row["current"]
-    ),
-    axis=1
-)
-
-anomalies = df[df["status"].str.contains("Anomaly")]
-
-st.write(f"Total Anomalies Detected: {len(anomalies)}")
-
-fig5 = px.scatter(
-    df,
-    x="voltage",
-    y="usage_kwh",
-    color="status",
-    title="Anomaly Detection Visualization"
-)
-
-st.plotly_chart(
-    fig5,
-    use_container_width=True
-)
-
-# --------------------------------
-# AI INSIGHTS
-# --------------------------------
-st.subheader("🤖 AI Insights")
-
-if avg_usage > 4:
-    st.warning(
-        "High average electricity consumption detected."
-    )
-
-else:
-    st.success(
-        "Electricity consumption appears normal."
-    )
-
-if len(anomalies) > 5:
-    st.error(
-        "Frequent anomalies detected in the system."
-    )
-
-else:
-    st.info(
-        "System anomaly levels are stable."
-    )
-# --------------------------------
-# EXPORT ANALYTICS DATA
-# --------------------------------
-st.markdown("---")
-
-st.subheader("📥 Export Analytics Data")
-
-csv = df.to_csv(index=False).encode("utf-8")
-
-st.download_button(
-    label="Download Analytics Report",
-    data=csv,
-    file_name="powernova_analytics.csv",
-    mime="text/csv"
+    use_container_width=True,
+    key="analytics_corr"
 )

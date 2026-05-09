@@ -47,4 +47,4 @@ def detect_anomaly(usage, voltage, current):
         return "⚠ Anomaly Detected"
 
     else:
-        return "✅ Normal"
+        return " Normal"

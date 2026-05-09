@@ -1,32 +1,36 @@
 import streamlit as st
+import pandas as pd
 import plotly.express as px
 
 from streamlit_autorefresh import st_autorefresh
 
 from utils.simulator import generate_data
-from utils.database import create_table, insert_data, fetch_data
-from utils.analytics import predict_usage, detect_anomaly
+
+from utils.database import (
+    create_table,
+    insert_data,
+    fetch_data
+)
+
+from utils.analytics import (
+    predict_usage,
+    detect_anomaly
+)
+
+from utils.report_generator import generate_pdf_report
+
 
 # --------------------------------
 # PAGE CONFIG
 # --------------------------------
 st.set_page_config(
-    page_title="Dashboard",
+    page_title="PowerNova AI",
     layout="wide"
 )
-# --------------------------------
-# LOAD CUSTOM CSS
-# --------------------------------
-with open("assets/styles.css") as f:
-    st.markdown(
-        f"<style>{f.read()}</style>",
-        unsafe_allow_html=True
-    )
-# --------------------------------
-# SIDEBAR
-# --------------------------------
-st.sidebar.title("⚙ Dashboard Settings")
 
+# --------------------------------
+# AUTO REFRESH
+# --------------------------------
 refresh_rate = st.sidebar.slider(
     "Refresh Rate (seconds)",
     1,
@@ -34,23 +38,23 @@ refresh_rate = st.sidebar.slider(
     3
 )
 
-# --------------------------------
-# AUTO REFRESH
-# --------------------------------
 st_autorefresh(
     interval=refresh_rate * 1000,
     key="dashboard_refresh"
 )
 
 # --------------------------------
-# DATABASE
+# DATABASE SETUP
 # --------------------------------
 create_table()
 
+# Generate new simulated reading
 new_data = generate_data()
 
+# Store in database
 insert_data(new_data)
 
+# Fetch all stored data
 df = fetch_data()
 
 # --------------------------------
@@ -70,7 +74,7 @@ predicted_usage = predict_usage(
     latest["current"]
 )
 
-anomaly_status = detect_anomaly(
+anomaly = detect_anomaly(
     latest["usage_kwh"],
     latest["voltage"],
     latest["current"]
@@ -98,59 +102,103 @@ col3.metric(
 
 col4.metric(
     "Predicted Usage",
-    predicted_usage
+    round(predicted_usage, 2)
 )
-
-st.markdown("---")
 
 # --------------------------------
 # SYSTEM STATUS
 # --------------------------------
+st.markdown("---")
+
 st.subheader("🚨 System Status")
 
-if "Anomaly" in anomaly_status:
-
-    st.error(anomaly_status)
+if anomaly == -1:
+    st.error("⚠ Anomaly Detected")
 
 else:
-
-    st.success(anomaly_status)
+    st.success("✅ Normal")
 
 # --------------------------------
-# CHART
+# LIVE CHART
 # --------------------------------
-st.subheader("📈 Electricity Usage Trend")
+st.markdown("---")
+
+st.subheader("📈 Live Electricity Usage")
+
+chart_data = df.tail(50)
 
 fig = px.line(
-    df,
+    chart_data,
     x="timestamp",
     y="usage_kwh",
-    title="Electricity Consumption Over Time"
+    markers=True,
+    title="Electricity Usage Trend"
+)
+
+fig.update_traces(
+    line=dict(width=3)
+)
+
+fig.update_layout(
+    template="plotly_dark",
+
+    paper_bgcolor="rgba(0,0,0,0)",
+
+    plot_bgcolor="rgba(0,0,0,0)",
+
+    xaxis_title="Timestamp",
+
+    yaxis_title="Usage (kWh)",
+
+    transition_duration=500
 )
 
 st.plotly_chart(
     fig,
-    use_container_width=True
+    use_container_width=True,
+    key="dashboard_chart"
 )
 
 # --------------------------------
 # RECENT READINGS
 # --------------------------------
+st.markdown("---")
+
 st.subheader("📋 Recent Readings")
 
-st.dataframe(df.tail(10))
+st.dataframe(
+    df.tail(10),
+    use_container_width=True
+)
+
 # --------------------------------
 # CSV DOWNLOAD
 # --------------------------------
-st.markdown("---")
-
-st.subheader("📥 Download Data")
-
-csv = df.to_csv(index=False).encode("utf-8")
+csv = df.to_csv(index=False)
 
 st.download_button(
-    label="Download Electricity Data",
+    label="⬇ Download CSV Data",
     data=csv,
-    file_name="powernova_data.csv",
+    file_name="electricity_data.csv",
     mime="text/csv"
 )
+
+# --------------------------------
+# PDF REPORT
+# --------------------------------
+st.markdown("---")
+
+st.subheader("📄 Generate PDF Report")
+
+if st.button("Generate PDF Report"):
+
+    pdf_file = generate_pdf_report(df)
+
+    with open(pdf_file, "rb") as file:
+
+        st.download_button(
+            label="Download PDF Report",
+            data=file,
+            file_name="powernova_report.pdf",
+            mime="application/pdf"
+        )

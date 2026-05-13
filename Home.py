@@ -61,10 +61,12 @@ st.markdown("""
 
 PowerNova AI is an intelligent electricity analytics platform inspired by modern smart energy systems.
 
-The platform simulates real smart meter behavior and applies machine learning algorithms for:
+The platform simulates smart meter behavior and applies machine learning algorithms to monitor and analyze electricity usage in real time.
+
+### Main Objectives
 
 - Smart electricity monitoring
-- AI-based forecasting
+- AI-based electricity forecasting
 - Anomaly detection
 - Real-time analytics
 - Energy consumption insights
@@ -88,9 +90,11 @@ Detects abnormal electricity patterns using:
 - Python
 - Streamlit
 - SQLite
+- Pandas
+- NumPy
 - Plotly
 - Scikit-learn
-- Pandas
+- GitHub
 
 ---
 
@@ -98,11 +102,22 @@ Detects abnormal electricity patterns using:
 
 ✅ Live electricity simulation  
 ✅ AI-powered predictions  
-✅ Smart anomaly detection  
+✅ Real-time electricity monitoring  
 ✅ Interactive dashboards  
-✅ Advanced analytics  
+✅ Electricity usage analytics  
 ✅ Downloadable reports  
 ✅ Real-time visualization  
+✅ Machine learning prediction system  
+
+---
+
+## 🔮 Future Enhancements
+
+- IoT smart meter integration
+- Cloud deployment
+- Mobile application support
+- Advanced deep learning models
+- Real-time alert system
 
 ---
 

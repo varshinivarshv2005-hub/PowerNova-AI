@@ -4,7 +4,7 @@ import plotly.express as px
 
 from streamlit_autorefresh import st_autorefresh
 
-from utils.simulator import generate_data
+from utils.simulator import generate_live_data
 
 from utils.database import (
     create_table,
@@ -29,7 +29,7 @@ st.set_page_config(
 )
 
 # --------------------------------
-# AUTO REFRESH
+# SIDEBAR
 # --------------------------------
 refresh_rate = st.sidebar.slider(
     "Refresh Rate (seconds)",
@@ -48,21 +48,14 @@ st_autorefresh(
 # --------------------------------
 create_table()
 
-# Generate new simulated reading
-new_data = generate_data()
+# Generate simulated live data
+new_data = generate_live_data()
 
-# Store in database
+# Store data in database
 insert_data(new_data)
 
 # Fetch all stored data
 df = fetch_data()
-
-# --------------------------------
-# HEADER
-# --------------------------------
-st.title("⚡ Live Electricity Dashboard")
-
-st.markdown("---")
 
 # --------------------------------
 # LATEST DATA
@@ -81,23 +74,58 @@ anomaly = detect_anomaly(
 )
 
 # --------------------------------
+# SIDEBAR SYSTEM INFO
+# --------------------------------
+st.sidebar.markdown("---")
+
+st.sidebar.subheader("⚡ System Info")
+
+st.sidebar.success("System Active")
+
+st.sidebar.metric(
+    "Live Usage",
+    f"{latest['usage_kwh']:.2f} kWh"
+)
+
+st.sidebar.metric(
+    "Voltage",
+    f"{latest['voltage']:.1f} V"
+)
+
+st.sidebar.metric(
+    "Current",
+    f"{latest['current']:.1f} A"
+)
+
+st.sidebar.markdown("---")
+
+st.sidebar.caption("PowerNova AI v1.0")
+
+# --------------------------------
+# HEADER
+# --------------------------------
+st.title("⚡ Live Electricity Dashboard")
+
+st.markdown("---")
+
+# --------------------------------
 # METRICS
 # --------------------------------
 col1, col2, col3, col4 = st.columns(4)
 
 col1.metric(
     "Usage (kWh)",
-    latest["usage_kwh"]
+    round(latest["usage_kwh"], 2)
 )
 
 col2.metric(
     "Voltage (V)",
-    latest["voltage"]
+    round(latest["voltage"], 2)
 )
 
 col3.metric(
     "Current (A)",
-    latest["current"]
+    round(latest["current"], 2)
 )
 
 col4.metric(
@@ -113,8 +141,7 @@ st.markdown("---")
 st.subheader("🚨 System Status")
 
 if anomaly == -1:
-    st.error("⚠ Anomaly Detected")
-
+    st.error("⚠️ Anomaly Detected")
 else:
     st.success("✅ Normal")
 
@@ -125,7 +152,8 @@ st.markdown("---")
 
 st.subheader("📈 Live Electricity Usage")
 
-chart_data = df.tail(50)
+chart_data = df.tail(20)
+chart_data = chart_data.sort_values("timestamp")
 
 fig = px.line(
     chart_data,
@@ -141,15 +169,10 @@ fig.update_traces(
 
 fig.update_layout(
     template="plotly_dark",
-
     paper_bgcolor="rgba(0,0,0,0)",
-
     plot_bgcolor="rgba(0,0,0,0)",
-
     xaxis_title="Timestamp",
-
     yaxis_title="Usage (kWh)",
-
     transition_duration=500
 )
 

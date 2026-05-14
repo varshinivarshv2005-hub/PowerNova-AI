@@ -24,12 +24,26 @@ from utils.report_generator import generate_pdf_report
 # PAGE CONFIG
 # --------------------------------
 st.set_page_config(
-    page_title="PowerNova AI",
+    page_title="Dashboard",
     layout="wide"
 )
 
+st.sidebar.markdown("""
+### ⚡ PowerNova AI
+""")
+
+st.sidebar.caption("AI Smart Energy Monitoring")
 # --------------------------------
-# SIDEBAR
+# LOAD CUSTOM CSS
+# --------------------------------
+with open("assets/styles.css") as f:
+    st.markdown(
+        f"<style>{f.read()}</style>",
+        unsafe_allow_html=True
+    )
+
+# --------------------------------
+# SIDEBAR SETTINGS
 # --------------------------------
 refresh_rate = st.sidebar.slider(
     "Refresh Rate (seconds)",
@@ -48,13 +62,13 @@ st_autorefresh(
 # --------------------------------
 create_table()
 
-# Generate simulated live data
+# Generate new simulated reading
 new_data = generate_live_data()
 
-# Store data in database
+# Store reading in database
 insert_data(new_data)
 
-# Fetch all stored data
+# Fetch database data
 df = fetch_data()
 
 # --------------------------------
@@ -74,13 +88,13 @@ anomaly = detect_anomaly(
 )
 
 # --------------------------------
-# SIDEBAR SYSTEM INFO
+# SIDEBAR
 # --------------------------------
 st.sidebar.markdown("---")
 
-st.sidebar.subheader("⚡ System Info")
+st.sidebar.subheader("⚡ System Overview")
 
-st.sidebar.success("System Active")
+st.sidebar.success("AI System Active")
 
 st.sidebar.metric(
     "Live Usage",
@@ -99,95 +113,160 @@ st.sidebar.metric(
 
 st.sidebar.markdown("---")
 
-st.sidebar.caption("PowerNova AI v1.0")
+st.sidebar.info("""
+PowerNova AI monitors electricity usage,
+detects anomalies, and predicts future
+energy consumption using AI models.
+""")
+
+st.sidebar.markdown("---")
+
+st.sidebar.caption("PowerNova AI • Version 1.0")
 
 # --------------------------------
 # HEADER
 # --------------------------------
-st.title("⚡ Live Electricity Dashboard")
+st.markdown("""
+<div style='padding-top:10px;'>
 
-st.markdown("---")
+<h1 style='font-size:52px;'>
+
+⚡ Smart Energy Dashboard
+
+</h1>
+
+<p style='font-size:20px; color:#94a3b8;'>
+
+Real-time electricity monitoring and AI-powered analytics.
+
+</p>
+
+</div>
+""", unsafe_allow_html=True)
 
 # --------------------------------
 # METRICS
 # --------------------------------
+st.markdown("## ⚡ Live System Metrics")
+
 col1, col2, col3, col4 = st.columns(4)
 
-col1.metric(
-    "Usage (kWh)",
-    round(latest["usage_kwh"], 2)
-)
+with col1:
+    st.metric(
+        "Usage",
+        f"{latest['usage_kwh']:.2f} kWh"
+    )
 
-col2.metric(
-    "Voltage (V)",
-    round(latest["voltage"], 2)
-)
+with col2:
+    st.metric(
+        "Voltage",
+        f"{latest['voltage']:.1f} V"
+    )
 
-col3.metric(
-    "Current (A)",
-    round(latest["current"], 2)
-)
+with col3:
+    st.metric(
+        "Current",
+        f"{latest['current']:.1f} A"
+    )
 
-col4.metric(
-    "Predicted Usage",
-    round(predicted_usage, 2)
-)
+with col4:
+    st.metric(
+        "AI Prediction",
+        f"{predicted_usage:.2f} kWh"
+    )
 
 # --------------------------------
 # SYSTEM STATUS
 # --------------------------------
 st.markdown("---")
 
-st.subheader("🚨 System Status")
+col1, col2 = st.columns([1, 2])
 
-if anomaly == -1:
-    st.error("⚠️ Anomaly Detected")
-else:
-    st.success("✅ Normal")
+with col1:
+
+    st.markdown("## 🚨 AI Monitoring Status")
+
+    if anomaly == -1:
+        st.error("⚠ Abnormal electricity pattern detected")
+
+    else:
+        st.success("✅ System operating normally")
+
+with col2:
+
+    st.info("""
+AI anomaly detection continuously monitors voltage,
+current, and electricity usage patterns in real time.
+""")
 
 # --------------------------------
-# LIVE CHART
+# PROFESSIONAL LIVE CHART
 # --------------------------------
-st.markdown("---")
 
-st.subheader("📈 Live Electricity Usage")
+chart_data = df.tail(15).copy()
 
-chart_data = df.tail(20)
-chart_data = chart_data.sort_values("timestamp")
+chart_data["timestamp"] = pd.to_datetime(
+    chart_data["timestamp"]
+)
 
 fig = px.line(
     chart_data,
     x="timestamp",
     y="usage_kwh",
-    markers=True,
-    title="Electricity Usage Trend"
+    markers=True
 )
 
 fig.update_traces(
-    line=dict(width=3)
+    mode="lines+markers",
+    line=dict(
+        width=4,
+        shape="spline"
+    ),
+    marker=dict(
+        size=8
+    )
 )
 
 fig.update_layout(
+
     template="plotly_dark",
+
     paper_bgcolor="rgba(0,0,0,0)",
+
     plot_bgcolor="rgba(0,0,0,0)",
-    xaxis_title="Timestamp",
-    yaxis_title="Usage (kWh)",
-    transition_duration=500
+
+    height=450,
+
+    margin=dict(
+        l=20,
+        r=20,
+        t=30,
+        b=20
+    ),
+
+    xaxis=dict(
+        title="Time",
+        showgrid=False
+    ),
+
+    yaxis=dict(
+        title="Usage (kWh)",
+        gridcolor="rgba(255,255,255,0.08)"
+    )
 )
 
 st.plotly_chart(
     fig,
-    use_container_width=True,
-    key="dashboard_chart"
+    use_container_width=True
 )
+
 
 # --------------------------------
 # RECENT READINGS
 # --------------------------------
 st.markdown("---")
 
-st.subheader("📋 Recent Readings")
+st.markdown("## 📋 Recent Smart Meter Readings")
 
 st.dataframe(
     df.tail(10),
@@ -197,6 +276,8 @@ st.dataframe(
 # --------------------------------
 # CSV DOWNLOAD
 # --------------------------------
+st.markdown("---")
+
 csv = df.to_csv(index=False)
 
 st.download_button(

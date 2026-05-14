@@ -17,6 +17,23 @@ with open("assets/styles.css") as f:
         f"<style>{f.read()}</style>",
         unsafe_allow_html=True
     )
+# --------------------------------
+# BRAND HEADER
+# --------------------------------
+st.markdown("""
+<div class="brand-logo">
+
+<div class="brand-icon">
+⚡
+</div>
+
+<div class="brand-text">
+<h1>PowerNova AI</h1>
+<p>Smart Energy Intelligence Platform</p>
+</div>
+
+</div>
+""", unsafe_allow_html=True)
 
 # --------------------------------
 # HERO SECTION
@@ -123,3 +140,9 @@ Detects abnormal electricity patterns using:
 
 Use the sidebar to navigate through the platform.
 """)
+
+st.markdown("---")
+
+st.caption(
+    " 2026 PowerNova AI • Intelligent Energy Monitoring Platform"
+)

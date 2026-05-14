@@ -4,7 +4,6 @@ import plotly.express as px
 
 from utils.database import fetch_data
 
-
 # --------------------------------
 # PAGE CONFIG
 # --------------------------------
@@ -12,70 +11,129 @@ st.set_page_config(
     page_title="Analytics",
     layout="wide"
 )
+st.sidebar.markdown("""
+### ⚡ PowerNova AI
+""")
+
+st.sidebar.caption("AI Smart Energy Monitoring")
+# --------------------------------
+# LOAD CSS
+# --------------------------------
+with open("assets/styles.css") as f:
+    st.markdown(
+        f"<style>{f.read()}</style>",
+        unsafe_allow_html=True
+    )
 
 # --------------------------------
 # LOAD DATA
 # --------------------------------
 df = fetch_data()
-df = df.tail(50)
-# --------------------------------
-# TITLE
-# --------------------------------
-st.title("📊 Electricity Analytics")
 
+# --------------------------------
+# HEADER
+# --------------------------------
+st.markdown("""
+<div style='padding-top:10px;'>
+
+<h1 style='font-size:52px;'>
+
+📊 Energy Analytics
+
+</h1>
+
+<p style='font-size:20px; color:#94a3b8;'>
+
+Analyze electricity usage trends and smart energy insights in real time.
+
+</p>
+
+</div>
+""", unsafe_allow_html=True)
+
+# --------------------------------
+# ANALYTICS METRICS
+# --------------------------------
+avg_usage = df["usage_kwh"].mean()
+max_usage = df["usage_kwh"].max()
+min_usage = df["usage_kwh"].min()
+avg_voltage = df["voltage"].mean()
+
+st.markdown("## ⚡ Usage Statistics")
+
+col1, col2, col3, col4 = st.columns(4)
+
+with col1:
+    st.metric(
+        "Average Usage",
+        f"{avg_usage:.2f} kWh"
+    )
+
+with col2:
+    st.metric(
+        "Maximum Usage",
+        f"{max_usage:.2f} kWh"
+    )
+
+with col3:
+    st.metric(
+        "Minimum Usage",
+        f"{min_usage:.2f} kWh"
+    )
+
+with col4:
+    st.metric(
+        "Average Voltage",
+        f"{avg_voltage:.1f} V"
+    )
+
+# --------------------------------
+# USAGE TREND GRAPH
+# --------------------------------
 st.markdown("---")
 
-# --------------------------------
-# BASIC STATS
-# --------------------------------
-col1, col2, col3 = st.columns(3)
+st.subheader("📈 Electricity Usage Trend")
 
-col1.metric(
-    "Average Usage",
-    round(df["usage_kwh"].mean(), 2)
-)
+chart_data = df.tail(15)
 
-col2.metric(
-    "Maximum Usage",
-    round(df["usage_kwh"].max(), 2)
-)
-
-col3.metric(
-    "Minimum Usage",
-    round(df["usage_kwh"].min(), 2)
-)
-
-# --------------------------------
-# USAGE TREND
-# --------------------------------
-st.markdown("---")
-
-st.subheader("📈 Usage Trend Analysis")
-
-trend_data = df.tail(100)
-
-fig1 = px.line(
-    trend_data,
+fig = px.line(
+    chart_data,
     x="timestamp",
     y="usage_kwh",
     markers=True,
-    title="Electricity Usage Trend"
+    title="Smart Energy Consumption Trend"
 )
 
-fig1.update_layout(
+fig.update_traces(
+    mode="lines+markers",
+    line=dict(
+        width=4,
+        shape="spline"
+    ),
+    marker=dict(
+        size=8
+    )
+)
+
+fig.update_layout(
     template="plotly_dark",
 
     paper_bgcolor="rgba(0,0,0,0)",
 
     plot_bgcolor="rgba(0,0,0,0)",
 
-    transition_duration=500
+    xaxis_title="Time",
+
+    yaxis_title="Usage (kWh)",
+
+    title_font=dict(size=22),
+
+    height=500
 )
 
 st.plotly_chart(
-    fig1,
-    use_container_width=True,
-    key="analytics_trend"
+    fig,
+    use_container_width=True
 )
 
 # --------------------------------
@@ -85,84 +143,72 @@ st.markdown("---")
 
 st.subheader("⚡ Voltage Analysis")
 
-fig2 = px.line(
-    trend_data,
+voltage_fig = px.area(
+    chart_data,
     x="timestamp",
     y="voltage",
-    title="Voltage Fluctuation"
+    title="Voltage Monitoring"
 )
 
-fig2.update_layout(
+voltage_fig.update_layout(
     template="plotly_dark",
 
     paper_bgcolor="rgba(0,0,0,0)",
 
-    plot_bgcolor="rgba(0,0,0,0)"
+    plot_bgcolor="rgba(0,0,0,0)",
+
+    height=450
 )
 
 st.plotly_chart(
-    fig2,
-    use_container_width=True,
-    key="analytics_voltage"
+    voltage_fig,
+    use_container_width=True
 )
 
 # --------------------------------
-# CURRENT ANALYSIS
+# SMART INSIGHTS
 # --------------------------------
 st.markdown("---")
 
-st.subheader("🔌 Current Analysis")
+st.markdown("## 🤖 Smart Energy Insights")
 
-fig3 = px.line(
-    trend_data,
-    x="timestamp",
-    y="current",
-    title="Current Variation"
-)
+if avg_usage > 6:
 
-fig3.update_layout(
-    template="plotly_dark",
+    st.warning("""
+Electricity usage is currently higher than normal.
+Energy optimization may help reduce consumption.
+""")
 
-    paper_bgcolor="rgba(0,0,0,0)",
+else:
 
-    plot_bgcolor="rgba(0,0,0,0)"
-)
-
-st.plotly_chart(
-    fig3,
-    use_container_width=True,
-    key="analytics_current"
-)
+    st.success("""
+Electricity consumption is currently operating
+within a stable and efficient range.
+""")
 
 # --------------------------------
-# CORRELATION
+# DATA TABLE
 # --------------------------------
 st.markdown("---")
 
-st.subheader("🧠 Feature Correlation")
+st.markdown("## 📋 Electricity Data")
 
-corr = df[[
-    "usage_kwh",
-    "voltage",
-    "current"
-]].corr()
-
-fig4 = px.imshow(
-    corr,
-    text_auto=True,
-    title="Correlation Matrix"
+st.dataframe(
+    df.tail(10),
+    use_container_width=True
 )
 
-fig4.update_layout(
-    template="plotly_dark",
+# --------------------------------
+# FUTURE SCOPE
+# --------------------------------
+st.markdown("---")
 
-    paper_bgcolor="rgba(0,0,0,0)",
+st.markdown("## 🔮 Future Analytics Features")
 
-    plot_bgcolor="rgba(0,0,0,0)"
-)
-
-st.plotly_chart(
-    fig4,
-    use_container_width=True,
-    key="analytics_corr"
-)
+st.markdown("""
+- AI-powered consumption forecasting
+- Real IoT smart meter integration
+- Peak load analysis
+- Energy optimization recommendations
+- Cloud-based analytics dashboard
+""")

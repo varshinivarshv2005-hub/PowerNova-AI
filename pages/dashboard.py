@@ -203,27 +203,33 @@ current, and electricity usage patterns in real time.
 # PROFESSIONAL LIVE CHART
 # --------------------------------
 
-chart_data = df.tail(15).copy()
+chart_data = df.tail(20).copy()
 
 chart_data["timestamp"] = pd.to_datetime(
     chart_data["timestamp"]
 )
 
+# cleaner professional time format
+chart_data["time"] = chart_data["timestamp"].dt.strftime("%H:%M:%S")
+
 fig = px.line(
     chart_data,
-    x="timestamp",
+    x="time",
     y="usage_kwh",
-    markers=True
+    markers=False
 )
 
 fig.update_traces(
+    line_smoothing=0.5,
     mode="lines+markers",
+
     line=dict(
         width=4,
         shape="spline"
     ),
+
     marker=dict(
-        size=8
+        size=6
     )
 )
 
@@ -235,24 +241,27 @@ fig.update_layout(
 
     plot_bgcolor="rgba(0,0,0,0)",
 
-    height=450,
+    height=430,
 
     margin=dict(
         l=20,
         r=20,
-        t=30,
+        t=20,
         b=20
     ),
 
     xaxis=dict(
         title="Time",
-        showgrid=False
+        showgrid=False,
+        tickangle=0
     ),
 
     yaxis=dict(
         title="Usage (kWh)",
         gridcolor="rgba(255,255,255,0.08)"
-    )
+    ),
+
+    hovermode="x unified"
 )
 
 st.plotly_chart(

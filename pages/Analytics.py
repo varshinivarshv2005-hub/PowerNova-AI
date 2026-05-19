@@ -9,21 +9,52 @@ from utils.database import fetch_data
 # --------------------------------
 st.set_page_config(
     page_title="Analytics",
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="expanded"
 )
-st.sidebar.markdown("""
-### ⚡ PowerNova AI
-""")
 
+# --------------------------------
+# CUSTOM CSS
+# --------------------------------
+st.markdown("""
+<style>
+
+/* Main background */
+.main {
+    background-color: #0f172a;
+}
+
+/* Reduce top spacing */
+.block-container {
+    padding-top: 2rem;
+}
+
+/* Sidebar */
+section[data-testid="stSidebar"] {
+    background-color: #020617;
+}
+
+/* Metric cards */
+div[data-testid="stMetric"] {
+    background-color: #111827;
+    padding: 15px;
+    border-radius: 12px;
+    border: 1px solid #1e293b;
+    text-align: center;
+}
+
+</style>
+""", unsafe_allow_html=True)
+
+# --------------------------------
+# SIDEBAR
+# --------------------------------
+st.sidebar.markdown("## ⚡ PowerNova AI")
 st.sidebar.caption("AI Smart Energy Monitoring")
-# --------------------------------
-# LOAD CSS
-# --------------------------------
-with open("assets/styles.css") as f:
-    st.markdown(
-        f"<style>{f.read()}</style>",
-        unsafe_allow_html=True
-    )
+
+st.sidebar.markdown("---")
+
+st.sidebar.success("Analytics System Active")
 
 # --------------------------------
 # LOAD DATA
@@ -33,23 +64,13 @@ df = fetch_data()
 # --------------------------------
 # HEADER
 # --------------------------------
-st.markdown("""
-<div style='padding-top:10px;'>
+st.markdown("## 📊 Energy Analytics")
 
-<h1 style='font-size:52px;'>
+st.caption(
+    "Analyze electricity usage trends and smart energy insights in real time."
+)
 
-📊 Energy Analytics
-
-</h1>
-
-<p style='font-size:20px; color:#94a3b8;'>
-
-Analyze electricity usage trends and smart energy insights in real time.
-
-</p>
-
-</div>
-""", unsafe_allow_html=True)
+st.markdown("---")
 
 # --------------------------------
 # ANALYTICS METRICS
@@ -59,7 +80,7 @@ max_usage = df["usage_kwh"].max()
 min_usage = df["usage_kwh"].min()
 avg_voltage = df["voltage"].mean()
 
-st.markdown("## ⚡ Usage Statistics")
+st.markdown("### ⚡ Usage Statistics")
 
 col1, col2, col3, col4 = st.columns(4)
 
@@ -87,48 +108,65 @@ with col4:
         f"{avg_voltage:.1f} V"
     )
 
+st.markdown("---")
+
 # --------------------------------
 # USAGE TREND GRAPH
 # --------------------------------
-st.markdown("---")
-
 st.subheader("📈 Electricity Usage Trend")
 
-chart_data = df.tail(15)
+chart_data = df.tail(15).copy()
+
+chart_data["timestamp"] = pd.to_datetime(
+    chart_data["timestamp"]
+)
+
+chart_data["time"] = chart_data[
+    "timestamp"
+].dt.strftime("%H:%M:%S")
 
 fig = px.line(
     chart_data,
-    x="timestamp",
-    y="usage_kwh",
-    markers=True,
-    title="Smart Energy Consumption Trend"
+    x="time",
+    y="usage_kwh"
 )
 
 fig.update_traces(
-    mode="lines+markers",
+    mode="lines",
     line=dict(
         width=4,
         shape="spline"
-    ),
-    marker=dict(
-        size=8
     )
 )
 
 fig.update_layout(
+
     template="plotly_dark",
 
-    paper_bgcolor="rgba(0,0,0,0)",
+    paper_bgcolor="#111827",
 
-    plot_bgcolor="rgba(0,0,0,0)",
+    plot_bgcolor="#111827",
 
-    xaxis_title="Time",
+    font_color="white",
 
-    yaxis_title="Usage (kWh)",
+    height=320,
 
-    title_font=dict(size=22),
+    margin=dict(
+        l=10,
+        r=10,
+        t=10,
+        b=10
+    ),
 
-    height=500
+    xaxis=dict(
+        title="Time",
+        showgrid=False
+    ),
+
+    yaxis=dict(
+        title="Usage (kWh)",
+        gridcolor="rgba(255,255,255,0.08)"
+    )
 )
 
 st.plotly_chart(
@@ -136,28 +174,47 @@ st.plotly_chart(
     use_container_width=True
 )
 
+st.markdown("---")
+
 # --------------------------------
 # VOLTAGE ANALYSIS
 # --------------------------------
-st.markdown("---")
-
 st.subheader("⚡ Voltage Analysis")
 
 voltage_fig = px.area(
     chart_data,
-    x="timestamp",
-    y="voltage",
-    title="Voltage Monitoring"
+    x="time",
+    y="voltage"
 )
 
 voltage_fig.update_layout(
+
     template="plotly_dark",
 
-    paper_bgcolor="rgba(0,0,0,0)",
+    paper_bgcolor="#111827",
 
-    plot_bgcolor="rgba(0,0,0,0)",
+    plot_bgcolor="#111827",
 
-    height=450
+    font_color="white",
+
+    height=320,
+
+    margin=dict(
+        l=10,
+        r=10,
+        t=10,
+        b=10
+    ),
+
+    xaxis=dict(
+        title="Time",
+        showgrid=False
+    ),
+
+    yaxis=dict(
+        title="Voltage",
+        gridcolor="rgba(255,255,255,0.08)"
+    )
 )
 
 st.plotly_chart(
@@ -165,50 +222,53 @@ st.plotly_chart(
     use_container_width=True
 )
 
+st.markdown("---")
+
 # --------------------------------
 # SMART INSIGHTS
 # --------------------------------
-st.markdown("---")
-
-st.markdown("## 🤖 Smart Energy Insights")
+st.subheader("🤖 Smart Energy Insights")
 
 if avg_usage > 6:
 
     st.warning("""
 Electricity usage is currently higher than normal.
+
 Energy optimization may help reduce consumption.
 """)
 
 else:
 
     st.success("""
-Electricity consumption is currently operating
-within a stable and efficient range.
+Electricity consumption is operating within a stable and efficient range.
 """)
+
+st.markdown("---")
 
 # --------------------------------
 # DATA TABLE
 # --------------------------------
-st.markdown("---")
+st.subheader("📋 Recent Electricity Data")
 
-st.markdown("## 📋 Electricity Data")
+display_df = df.tail(10).copy()
 
 st.dataframe(
-    df.tail(10),
-    use_container_width=True
+    display_df,
+    use_container_width=True,
+    height=350
 )
 
-# --------------------------------
-# FUTURE SCOPE
-# --------------------------------
 st.markdown("---")
 
-st.markdown("## 🔮 Future Analytics Features")
+# --------------------------------
+# FUTURE FEATURES
+# --------------------------------
+st.subheader("🔮 Future Analytics Features")
 
-st.markdown("""
-- AI-powered consumption forecasting
-- Real IoT smart meter integration
-- Peak load analysis
-- Energy optimization recommendations
-- Cloud-based analytics dashboard
+st.info("""
+• AI-powered consumption forecasting  
+• Real IoT smart meter integration  
+• Peak load analysis  
+• Energy optimization recommendations  
+• Cloud-based analytics dashboard
 """)

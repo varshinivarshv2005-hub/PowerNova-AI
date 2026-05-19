@@ -10,22 +10,52 @@ from utils.analytics import predict_usage
 # --------------------------------
 st.set_page_config(
     page_title="Predictions",
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="expanded"
 )
 
-st.sidebar.markdown("""
-### ⚡ PowerNova AI
-""")
+# --------------------------------
+# CUSTOM CSS
+# --------------------------------
+st.markdown("""
+<style>
 
+/* Main background */
+.main {
+    background-color: #0f172a;
+}
+
+/* Reduce top spacing */
+.block-container {
+    padding-top: 2rem;
+}
+
+/* Sidebar */
+section[data-testid="stSidebar"] {
+    background-color: #020617;
+}
+
+/* Metric cards */
+div[data-testid="stMetric"] {
+    background-color: #111827;
+    padding: 15px;
+    border-radius: 12px;
+    border: 1px solid #1e293b;
+    text-align: center;
+}
+
+</style>
+""", unsafe_allow_html=True)
+
+# --------------------------------
+# SIDEBAR
+# --------------------------------
+st.sidebar.markdown("## ⚡ PowerNova AI")
 st.sidebar.caption("AI Smart Energy Monitoring")
-# --------------------------------
-# LOAD CSS
-# --------------------------------
-with open("assets/styles.css") as f:
-    st.markdown(
-        f"<style>{f.read()}</style>",
-        unsafe_allow_html=True
-    )
+
+st.sidebar.markdown("---")
+
+st.sidebar.success("Prediction System Active")
 
 # --------------------------------
 # LOAD DATA
@@ -42,28 +72,18 @@ predicted_usage = predict_usage(
 # --------------------------------
 # HEADER
 # --------------------------------
-st.markdown("""
-<div style='padding-top:10px;'>
+st.markdown("## 🔮 AI Energy Predictions")
 
-<h1 style='font-size:52px;'>
+st.caption(
+    "Machine learning powered electricity forecasting and intelligent energy analysis."
+)
 
-🔮 AI Energy Predictions
-
-</h1>
-
-<p style='font-size:20px; color:#94a3b8;'>
-
-Machine learning powered electricity forecasting and intelligent energy analysis.
-
-</p>
-
-</div>
-""", unsafe_allow_html=True)
+st.markdown("---")
 
 # --------------------------------
 # METRICS
 # --------------------------------
-st.markdown("## ⚡ Prediction Insights")
+st.markdown("### ⚡ Prediction Insights")
 
 col1, col2, col3 = st.columns(3)
 
@@ -85,69 +105,90 @@ with col3:
         f"{latest['current']:.1f} A"
     )
 
-# --------------------------------
-# AI MODEL INFO
-# --------------------------------
 st.markdown("---")
 
-col1, col2 = st.columns([1,2])
+# --------------------------------
+# AI MODEL SECTION
+# --------------------------------
+left, right = st.columns([1, 2])
 
-with col1:
+with left:
 
-    st.markdown("## 🤖 AI Model")
+    st.subheader("🤖 AI Model")
 
     st.success("Linear Regression")
 
-with col2:
+with right:
 
     st.info("""
-The forecasting model analyzes voltage,
-current, and historical electricity usage
-patterns to estimate future energy consumption.
+The forecasting model analyzes:
+
+• Voltage readings  
+• Current readings  
+• Historical electricity usage patterns  
+
+to estimate future energy consumption.
 """)
 
-# --------------------------------
-# TREND CHART
-# --------------------------------
 st.markdown("---")
 
-st.subheader("📈 Recent Usage Trend")
+# --------------------------------
+# FORECAST GRAPH
+# --------------------------------
+st.subheader("📈 Electricity Usage Forecast Trend")
 
-chart_data = df.tail(10)
+chart_data = df.tail(15).copy()
+
+chart_data["timestamp"] = pd.to_datetime(
+    chart_data["timestamp"]
+)
+
+chart_data["time"] = chart_data[
+    "timestamp"
+].dt.strftime("%H:%M:%S")
 
 fig = px.line(
     chart_data,
-    x="timestamp",
-    y="usage_kwh",
-    markers=True,
-    title="Electricity Usage Forecast Trend"
+    x="time",
+    y="usage_kwh"
 )
 
 fig.update_traces(
-    mode="lines+markers",
+    mode="lines",
     line=dict(
         width=4,
         shape="spline"
-    ),
-    marker=dict(
-        size=8
     )
 )
 
 fig.update_layout(
+
     template="plotly_dark",
 
-    paper_bgcolor="rgba(0,0,0,0)",
+    paper_bgcolor="#111827",
 
-    plot_bgcolor="rgba(0,0,0,0)",
+    plot_bgcolor="#111827",
 
-    xaxis_title="Time",
+    font_color="white",
 
-    yaxis_title="Usage (kWh)",
+    height=320,
 
-    title_font=dict(size=22),
+    margin=dict(
+        l=10,
+        r=10,
+        t=10,
+        b=10
+    ),
 
-    height=500
+    xaxis=dict(
+        title="Time",
+        showgrid=False
+    ),
+
+    yaxis=dict(
+        title="Usage (kWh)",
+        gridcolor="rgba(255,255,255,0.08)"
+    )
 )
 
 st.plotly_chart(
@@ -155,36 +196,48 @@ st.plotly_chart(
     use_container_width=True
 )
 
-# --------------------------------
-# AI EXPLANATION
-# --------------------------------
 st.markdown("---")
 
-st.markdown("## 📘 How Prediction Works")
+# --------------------------------
+# HOW PREDICTION WORKS
+# --------------------------------
+left, right = st.columns([2, 1])
 
-st.markdown("""
-The AI forecasting model uses:
+with left:
+
+    st.subheader("📘 How Prediction Works")
+
+    st.markdown("""
+The prediction system uses:
 
 - Voltage readings
 - Current readings
-- Historical electricity usage trends
+- Historical electricity usage patterns
 
-The Linear Regression algorithm learns electricity
-consumption behavior and predicts future energy usage
-based on real-time electrical patterns.
+The Linear Regression model learns relationships
+between electrical parameters and predicts future
+electricity consumption.
 """)
+
+with right:
+
+    st.subheader("⚡ AI Insight")
+
+    st.success(
+        "Electricity usage prediction operating normally."
+    )
+
+st.markdown("---")
 
 # --------------------------------
 # FUTURE ENHANCEMENTS
 # --------------------------------
-st.markdown("---")
+st.subheader("🔮 Future Enhancements")
 
-st.markdown("## 🔮 Future Enhancements")
-
-st.markdown("""
-- Real IoT smart meter integration
-- Deep learning forecasting models
-- AI energy optimization
-- Smart electricity alerts
-- Cloud analytics platform
+st.info("""
+• Real IoT smart meter integration  
+• Deep learning forecasting models  
+• AI energy optimization  
+• Smart electricity alerts  
+• Cloud analytics platform
 """)

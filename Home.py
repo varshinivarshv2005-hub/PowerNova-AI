@@ -6,7 +6,8 @@ from datetime import datetime
 # --------------------------------
 st.set_page_config(
     page_title="PowerNova AI",
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="expanded"
 )
 
 # --------------------------------
@@ -21,18 +22,33 @@ with open("assets/styles.css") as f:
 # BRAND HEADER
 # --------------------------------
 st.markdown("""
-<div class="brand-logo">
+<style>
 
-<div class="brand-icon">
-⚡
-</div>
+/* Main background */
+.main {
+    background-color: #0f172a;
+}
 
-<div class="brand-text">
-<h1>PowerNova AI</h1>
-<p>Smart Energy Intelligence Platform</p>
-</div>
+/* Metric cards */
+div[data-testid="stMetric"] {
+    background-color: #111827;
+    padding: 15px;
+    border-radius: 12px;
+    border: 1px solid #1e293b;
+    text-align: center;
+}
 
-</div>
+/* Reduce top padding */
+.block-container {
+    padding-top: 2rem;
+}
+
+/* Sidebar */
+section[data-testid="stSidebar"] {
+    background-color: #020617;
+}
+
+</style>
 """, unsafe_allow_html=True)
 
 # --------------------------------
@@ -117,14 +133,14 @@ Detects abnormal electricity patterns using:
 
 ## 📊 Key Features
 
-✅ Live electricity simulation  
-✅ AI-powered predictions  
-✅ Real-time electricity monitoring  
-✅ Interactive dashboards  
-✅ Electricity usage analytics  
-✅ Downloadable reports  
-✅ Real-time visualization  
-✅ Machine learning prediction system  
+ -Live electricity simulation  
+ -AI-powered predictions  
+ -Real-time electricity monitoring  
+ -Interactive dashboards  
+ -Electricity usage analytics  
+ -Downloadable reports  
+ -Real-time visualization  
+ -Machine learning prediction system  
 
 ---
 
